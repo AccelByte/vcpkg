@@ -8,16 +8,18 @@ vcpkg_from_github(
     HEAD_REF master
     PATCHES
         fix-directory-output.patch
-        remove-owner-read-perms.patch		
+        remove-owner-read-perms.patch
+		fix-static-build-static-runtime.patch
 )
 
 #Handle static lib
 set(BUILD_STATIC_LIB OFF) 
+set(BUILD_DYNAMIC_LIB ON)
 if(VCPKG_LIBRARY_LINKAGE STREQUAL static)
-	set(BUILD_STATIC_LIB ON) 
-else()
-	set(BUILD_STATIC_LIB OFF) 
+    set(BUILD_STATIC_LIB ON) 
+	set(BUILD_DYNAMIC_LIB OFF)
 endif()
+
 vcpkg_configure_cmake(
 	SOURCE_PATH ${SOURCE_PATH}
 	PREFER_NINJA
@@ -25,6 +27,10 @@ vcpkg_configure_cmake(
 		-DBUILD_BENCHMARKS=OFF
 		-DBUILD_UNIT_TESTS=OFF
 		-DBUILD_STATIC=${BUILD_STATIC_LIB}
+		-DBUILD_WITH_STATIC_RUNTIME_LIBS=${BUILD_STATIC_LIB}
+		-DBUILD_RTTR_DYNAMIC=${BUILD_DYNAMIC_LIB}
+		-DBUILD_EXAMPLES=${BUILD_DYNAMIC_LIB}
+		-DBUILD_UNIT_TEST=${BUILD_DYNAMIC_LIB}	
 )
 
 vcpkg_install_cmake()
@@ -35,11 +41,6 @@ elseif(NOT VCPKG_CMAKE_SYSTEM_NAME OR VCPKG_CMAKE_SYSTEM_NAME STREQUAL "WindowsS
 	vcpkg_fixup_cmake_targets(CONFIG_PATH cmake)
 else()
 	message(FATAL_ERROR "RTTR does not support this platform")
-endif()
-
-#Handle static lib
-if(VCPKG_LIBRARY_LINKAGE STREQUAL static)
-	file(REMOVE_RECURSE ${CURRENT_PACKAGES_DIR}/bin ${CURRENT_PACKAGES_DIR}/debug/bin)
 endif()
 
 #Handle copyright
